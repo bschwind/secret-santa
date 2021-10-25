@@ -1,4 +1,4 @@
-use rand::{seq::SliceRandom, thread_rng, SeedableRng};
+use rand::{rngs::StdRng, seq::SliceRandom, thread_rng, SeedableRng};
 use sendgrid::v3::{Content, Email, Message, Personalization, Sender};
 use serde::Deserialize;
 
@@ -8,10 +8,13 @@ const FROM_EMAIL: &'static str = "sender@example.com";
 struct Person {
     name: String,
     email: String,
+    last_year_giftee: String,
 }
 
 fn pairs_are_valid(pairs: &[(Person, Person)]) -> bool {
-    pairs.iter().all(|(gifter, recipient)| gifter != recipient)
+    pairs
+        .iter()
+        .all(|(gifter, recipient)| gifter != recipient && gifter.last_year_giftee != recipient.name)
 }
 
 fn email_gifter(sender: &Sender, (gifter, recipient): &(Person, Person)) {
@@ -19,10 +22,7 @@ fn email_gifter(sender: &Sender, (gifter, recipient): &(Person, Person)) {
 
     let msg = Message::new()
         .set_from(Email::new().set_email(FROM_EMAIL))
-        .set_subject(&format!(
-            "🎅❄️ Hi {}, your Secret Santa giftee is here 🎁🤶",
-            gifter.name
-        ))
+        .set_subject(&format!("🎅❄️ Hi {}, your Secret Santa giftee is here 🎁🤶", gifter.name))
         .add_content(
             Content::new()
                 .set_content_type("text/plain")
